@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:all": "concurrently \"npm run dev\" \"npm start --prefix ../ws-scrcpy\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -14,6 +15,7 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "concurrently": "^9.1.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

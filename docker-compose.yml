@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  scrcpy-dashboard:
+    build: .
+    container_name: scrcpy-dashboard
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    # Required for ADB USB access (connect phone via USB)
+    privileged: true
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+    environment:
+      - NEXT_PUBLIC_SCRCPY_URL=http://localhost:8000
+    # For wireless ADB only, you can remove privileged and volumes
+    # and use "adb connect IP:5555" from host

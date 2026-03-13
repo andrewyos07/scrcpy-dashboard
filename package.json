@@ -4,9 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:all": "concurrently \"npm run dev\" \"npm start --prefix ../ws-scrcpy\"",
-    "build": "next build",
-    "start": "next start",
+    "dev:all": "concurrently \"npm run dev\" \"npm run start:ws\"",
+    "start:ws": "npm run start --prefix ./ws-scrcpy",
+    "start:ws:prod": "npm start --prefix ./ws-scrcpy/dist",
+    "build": "npm run build:ws && next build",
+    "build:ws": "npm run dist --prefix ./ws-scrcpy",
+    "start": "concurrently \"next start\" \"npm run start:ws:prod\"",
+    "docker:build": "docker build -t scrcpy-dashboard .",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
     "lint": "eslint"
   },
   "dependencies": {

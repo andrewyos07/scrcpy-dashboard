@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+ws-scrcpy/node_modules
+
+# Build outputs
+.next
+out
+ws-scrcpy/dist
+
+# Git
+.git
+.gitignore
+
+# IDE & misc
+.DS_Store
+*.log
+.env*
+.vercel
+
+# Docs (optional - remove if you want in image)
+*.md
+!README.md

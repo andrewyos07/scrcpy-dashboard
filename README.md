@@ -1,12 +1,12 @@
 # Scrcpy Dashboard
 
-A Next.js dashboard for managing Android devices and streaming them via [ws-scrcpy](https://github.com/NetrisTV/ws-scrcpy). Uses ADB to discover, connect, and disconnect devices over USB and network.
+A Next.js dashboard for managing Android devices and streaming them via [ws-scrcpy](https://github.com/NetrisTV/ws-scrcpy). **Satu project** – dashboard dan ws-scrcpy digabung, tidak perlu menjalankan 2 project terpisah.
 
 ## Prerequisites
 
 - **Node.js** 18+
 - **ADB** (Android Debug Bridge) – [Installation guide](https://developer.android.com/tools/adb)
-- **ws-scrcpy** – WebSocket-based scrcpy viewer for streaming device screens
+- **scrcpy** – untuk streaming (terinstall otomatis di Docker)
 
 ## Setup
 
@@ -14,94 +14,123 @@ A Next.js dashboard for managing Android devices and streaming them via [ws-scrc
 
 ```bash
 npm install
+npm install --prefix ./ws-scrcpy
 ```
 
-### 2. Configure environment
+### 2. Configure environment (opsional)
 
-Copy the example env file and set the ws-scrcpy URL:
-
-```bash
-cp .env.local.example .env.local
-```
-
-Edit `.env.local`:
+Buat `.env.local` jika ingin mengubah URL ws-scrcpy:
 
 ```
 NEXT_PUBLIC_SCRCPY_URL=http://localhost:8000
 ```
 
-Replace with your ws-scrcpy server URL (e.g. `http://your-server:8000`).
+Default: `http://localhost:8000`.
 
-### 3. Run ws-scrcpy (separate process)
-
-Start ws-scrcpy before using the dashboard:
+### 3. Jalankan (satu perintah)
 
 ```bash
-# Example: run ws-scrcpy on port 8000
-npx ws-scrcpy
+npm run dev:all
 ```
 
-### 4. Start the dashboard
+Ini menjalankan **Next.js dashboard** (port 3000) dan **ws-scrcpy** (port 8000) bersamaan. Buka [http://localhost:3000](http://localhost:3000).
+
+### Alternatif: Development terpisah
 
 ```bash
+# Terminal 1: Dashboard saja
 npm run dev
+
+# Terminal 2: ws-scrcpy saja (build + start)
+npm run start:ws
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+## Docker (Instalasi Mudah)
+
+### Build & Run
+
+```bash
+# Build image
+npm run docker:build
+
+# Jalankan container
+npm run docker:up
+```
+
+Atau manual:
+
+```bash
+docker compose up -d
+```
+
+Buka [http://localhost:3000](http://localhost:3000).
+
+### Catatan Docker
+
+- **USB (ADB via kabel)**: Container memakai `--privileged` dan mount `/dev/bus/usb`. Pastikan device terhubung sebelum start.
+- **Wireless ADB**: Jika hanya pakai `adb connect IP:5555`, bisa hapus `privileged` dan `volumes` di `docker-compose.yml`.
+- Stop: `npm run docker:down` atau `docker compose down`
+
+## Production Build
+
+```bash
+npm run build
+npm run start
+```
 
 ## Usage
 
 ### Dashboard (`/`)
 
-- **Add Device**: Enter `IP:port` (e.g. `192.168.1.100:5555`) and click Connect to add a device over the network.
-- **Device List**: Shows connected devices with serial, model, and state. Refreshes every 5 seconds.
-- **Open**: Opens the device view in an iframe with ws-scrcpy.
-- **Disconnect**: Disconnects network devices (shown only for `IP:port` serials).
-- **Remote Servers (Laptop Lain)**: Tambah URL ws-scrcpy dari laptop lain. Berguna untuk mengontrol Android yang terhubung ke laptop lain di jaringan. Contoh: `http://192.168.0.50:8000`.
+- **Add Device**: Masukkan `IP:port` (mis. `192.168.1.100:5555`) dan klik Connect.
+- **Device List**: Daftar device yang terhubung, refresh otomatis tiap 5 detik.
+- **Open**: Buka device view dengan ws-scrcpy di iframe.
+- **Disconnect**: Putuskan device jaringan.
+- **Remote Servers (Laptop Lain)**: Tambah URL ws-scrcpy dari laptop lain untuk kontrol Android di jaringan.
 
 ### Device View (`/device/[serial]`)
 
-- Embeds ws-scrcpy in an iframe.
-- Passes the device serial as a URL query parameter for ws-scrcpy to target the correct device.
-- Access directly via `/device/YOUR_SERIAL` or `/device/192.168.1.100%3A5555` for network devices.
+- Menampilkan ws-scrcpy di iframe dengan serial device yang dipilih.
+- Akses langsung: `/device/YOUR_SERIAL` atau `/device/192.168.1.100%3A5555`.
 
 ### Remote View (`/remote?url=...`)
 
 - Membuka ws-scrcpy dari laptop lain dalam iframe.
 - Digunakan saat mengklik "Buka" pada Remote Server.
 
-### Setup Multi-Laptop
-
-1. **Laptop A** (punya Android): Jalankan ws-scrcpy (`npm start` di folder ws-scrcpy). Pastikan berjalan di port 8000 dan bisa diakses dari jaringan (firewall allow).
-2. **Laptop B** (dashboard): Jalankan scrcpy-dashboard. Di section "Remote Servers", tambah `http://<IP_LAPTOP_A>:8000`.
-3. Klik "Buka" untuk mengontrol Android di Laptop A dari Laptop B.
-
-## API Endpoints
-
-| Method | Endpoint                  | Description                                     |
-| ------ | ------------------------- | ----------------------------------------------- |
-| GET    | `/api/devices`            | List connected devices                          |
-| POST   | `/api/devices/connect`    | Connect device by `{ "address": "IP:port" }`    |
-| POST   | `/api/devices/disconnect` | Disconnect device by `{ "address": "IP:port" }` |
-
 ## Project Structure
 
 ```
-src/
-├── types/device.ts       # Device, AddDeviceInput, ApiResponse
-├── lib/adb.ts            # ADB utilities (getDevices, connect, disconnect)
-├── app/
-│   ├── api/devices/      # API routes
-│   ├── device/[serial]/  # Device view with ws-scrcpy iframe
-│   └── page.tsx          # Dashboard
-└── components/
-    ├── DeviceList.tsx    # Device list with connect/open
-    └── AddDeviceForm.tsx # Add device form
+scrcpy-dashboard/
+├── src/                    # Next.js (dashboard)
+│   ├── app/
+│   ├── components/
+│   └── lib/
+├── ws-scrcpy/              # ws-scrcpy (streaming Android)
+│   ├── src/
+│   ├── webpack/
+│   └── ...
+├── Dockerfile
+├── docker-compose.yml
+└── package.json
 ```
+
+## Scripts
+
+| Script                 | Deskripsi                                    |
+| ---------------------- | -------------------------------------------- |
+| `npm run dev:all`      | Jalankan dashboard + ws-scrcpy (development) |
+| `npm run dev`          | Dashboard saja                               |
+| `npm run build`        | Build ws-scrcpy + Next.js                    |
+| `npm run start`        | Production: Next.js + ws-scrcpy              |
+| `npm run docker:build` | Build Docker image                           |
+| `npm run docker:up`    | Jalankan container                           |
+| `npm run docker:down`  | Stop container                               |
 
 ## Tech Stack
 
 - Next.js 16 (App Router)
 - TypeScript
 - Tailwind CSS
+- ws-scrcpy (Express, WebSocket, ADB)
 - ADB (via `child_process`)

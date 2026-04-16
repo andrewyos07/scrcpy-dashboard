@@ -66,6 +66,33 @@ export async function connectDevice(address: string): Promise<void> {
   }
 }
 
+export async function enableTcpipForDevice(serial: string, port = 5555): Promise<void> {
+  const trimmedSerial = serial.trim();
+  if (!/^[A-Za-z0-9._:-]+$/.test(trimmedSerial)) {
+    throw new Error("Invalid device serial");
+  }
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error("Invalid TCP/IP port");
+  }
+
+  try {
+    const { stdout, stderr } = await execAsync(`adb -s ${trimmedSerial} tcpip ${port}`, {
+      env: ADB_ENV,
+      timeout: 15000,
+    });
+    const output = (stdout + stderr).trim().toLowerCase();
+
+    if (output.includes("error") || output.includes("failed")) {
+      throw new Error(output || "Failed to enable TCP/IP mode");
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      message.includes("tcpip") ? message : `Failed to enable TCP/IP mode: ${message}`
+    );
+  }
+}
+
 export async function disconnectDevice(address: string): Promise<void> {
   try {
     await execAsync(`adb disconnect ${address}`, { env: ADB_ENV });

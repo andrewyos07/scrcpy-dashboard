@@ -11,6 +11,11 @@ export interface AddDeviceInput {
   address: string; // IP:port format
 }
 
+export interface EnableTcpipInput {
+  serial: string;
+  port?: number;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
